@@ -15,6 +15,7 @@ from dejavu.database import Database
 from dejavu.fingerprint import FINGERPRINT_REDUCTION
 
 from multiprocessing import cpu_count
+from threading import Thread
 
 from itertools import chain
 
@@ -166,9 +167,12 @@ class SQLDatabase(Database):
         fingerprints associated with them.
         """
         with self.cursor() as cur:
-            cur.execute(self.CREATE_SONGS_TABLE)
-            cur.execute(self.CREATE_FINGERPRINTS_TABLE)
-            cur.execute(self.DELETE_UNFINGERPRINTED)
+            try:
+                cur.execute(self.CREATE_SONGS_TABLE)
+                cur.execute(self.CREATE_FINGERPRINTS_TABLE)
+                cur.execute(self.DELETE_UNFINGERPRINTED)
+            except mysql.MySQLError as e:
+                print(e)
 
     def empty(self):
         """
@@ -295,27 +299,32 @@ class SQLDatabase(Database):
                 cur.execute(query, values2tuple)
             cur.execute("COMMIT;")
 
-
     def return_matches(self, mapper):
         """
         Return the (song_id, offset_diff) tuples associated with
         a list of (sha1, sample_offset) values.
         """
-        # Create a dictionary of hash => offset pairs for later lookups
+        def execute_select_query(split_values):
+            query = self.SELECT_MULTIPLE
+            query = query % ', '.join(['UNHEX(%s)'] * len(split_values))
+            with self.cursor() as cur:
+                cur.execute(query, split_values)
+                return [(sid, offset - mapper[hash]) for hash, sid, offset in cur]
 
         # Get an iteratable of all the hashes we need
         values = list(mapper.keys())
 
-        with self.cursor() as cur:
-            # Create our IN part of the query
-            query = self.SELECT_MULTIPLE
-            query = query % ', '.join(['UNHEX(%s)'] * len(values))
-
-            cur.execute(query, values)
-
-            for hash, sid, offset in cur:
-                # (sid, db_offset - song_sampled_offset)
-                yield (sid, offset - mapper[hash])
+        que = queue.Queue()
+        threads = []
+        for split_values in grouper(values, 1000):
+            t = Thread(target=lambda q, arg1: q.put(execute_select_query(arg1)), args=(que, split_values))
+            t.start()
+            threads.append(t)
+        for t in threads:
+            t.join()
+        while not que.empty():
+            for result in que.get():
+                yield result
 
     def __getstate__(self):
         return (self._options,)
@@ -327,7 +336,7 @@ class SQLDatabase(Database):
 
 def grouper(iterable, n, fillvalue=None):
     args = [iter(iterable)] * n
-    return (filter(None, values) for values
+    return (list(filter(None, values)) for values
             in zip_longest(fillvalue=fillvalue, *args))
 
 

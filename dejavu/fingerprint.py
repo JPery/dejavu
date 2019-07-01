@@ -113,12 +113,8 @@ def get_2D_peaks(arr2D, amp_min=DEFAULT_AMP_MIN):
     # filter peaks
     amps = amps.flatten()
     peaks = zip(i, j, amps)
-    peaks_filtered = [x for x in peaks if x[2] > amp_min]  # freq, time, amp
 
-    # get indices for frequency and time
-    frequency_idx = [x[1] for x in peaks_filtered]
-    time_idx = [x[0] for x in peaks_filtered]
-
+    time_idx, frequency_idx, amps_filtered = zip(*filter(lambda x: x[2] > amp_min, peaks))
     return zip(frequency_idx, time_idx)
 
 
