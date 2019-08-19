@@ -5,6 +5,7 @@ from scipy.ndimage.morphology import (generate_binary_structure,
                                       iterate_structure, binary_erosion)
 import hashlib
 from operator import itemgetter
+import logging
 
 IDX_FREQ_I = 0
 IDX_TIME_J = 1
@@ -64,6 +65,7 @@ FINGERPRINT_REDUCTION = 40
 FINGERPRINT_REDUCTION = (40 if FINGERPRINT_REDUCTION > 40 else FINGERPRINT_REDUCTION)
 FINGERPRINT_REDUCTION = (FINGERPRINT_REDUCTION + 1 if FINGERPRINT_REDUCTION % 2 == 1 else FINGERPRINT_REDUCTION)
 
+
 def fingerprint(channel_samples, Fs=DEFAULT_FS,
                 wsize=DEFAULT_WINDOW_SIZE,
                 wratio=DEFAULT_OVERLAP_RATIO,
@@ -74,12 +76,17 @@ def fingerprint(channel_samples, Fs=DEFAULT_FS,
     locally sensitive hashes.
     """
     # FFT the signal and extract frequency components
-    arr2D = mlab.specgram(
-        channel_samples,
-        NFFT=wsize,
-        Fs=Fs,
-        window=mlab.window_hanning,
-        noverlap=int(wsize * wratio))[0]
+    try:
+        arr2D = mlab.specgram(
+            channel_samples,
+            NFFT=wsize,
+            Fs=Fs,
+            window=mlab.window_hanning,
+            noverlap=int(wsize * wratio))[0]
+    except MemoryError:
+        logging.getLogger('dejavu').exception("Memory Error processing %s seconds audio" % (round(len(channel_samples) /
+                                                                                                  float(Fs), 4)))
+        return []
 
     # apply log transform since specgram() returns linear array
     arr2D = 10 * np.log10(arr2D)
@@ -113,8 +120,10 @@ def get_2D_peaks(arr2D, amp_min=DEFAULT_AMP_MIN):
     # filter peaks
     amps = amps.flatten()
     peaks = zip(i, j, amps)
-
-    time_idx, frequency_idx, amps_filtered = zip(*filter(lambda x: x[2] > amp_min, peaks))
+    try:
+        time_idx, frequency_idx, amps_filtered = zip(*filter(lambda x: x[2] > amp_min, peaks))
+    except ValueError:
+        return []
     return zip(frequency_idx, time_idx)
 
 
