@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import logging
 
 try:
     import queue
@@ -172,7 +173,7 @@ class SQLDatabase(Database):
                 cur.execute(self.CREATE_FINGERPRINTS_TABLE)
                 cur.execute(self.DELETE_UNFINGERPRINTED)
             except mysql.MySQLError as e:
-                print(e)
+                logging.exception(e)
 
     def empty(self):
         """
@@ -389,7 +390,10 @@ class Cursor(object):
             self.cursor.rollback()
 
         self.cursor.close()
-        self.conn.commit()
+        try:
+            self.conn.commit()
+        except mysql.InterfaceError:
+            logging.getLogger('dejavu').debug("Couldn't commit transaction")
 
         # Put it back on the queue
         try:
