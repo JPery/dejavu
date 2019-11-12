@@ -17,7 +17,7 @@ IDX_TIME_J = 1
 # Where 1 sets a diamond morphology which implies that diagonal elements are not considered as neighbors (this
 # is the value used in the original dejavu code).
 # And 2 sets a square mask, i.e. all elements are considered neighbors.
-CONNECTIVITY_MASK = 1
+CONNECTIVITY_MASK = 2
 
 ######################################################################
 # Sampling rate, related to the Nyquist conditions, which affects
