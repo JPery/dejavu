@@ -11,6 +11,15 @@ IDX_FREQ_I = 0
 IDX_TIME_J = 1
 
 ######################################################################
+# This is used as connectivity parameter for scipy.generate_binary_structure function. This parameter
+# changes the morphology mask when looking for maximum peaks on the spectrogram matrix.
+# Possible values are: [1, 2]
+# Where 1 sets a diamond morphology which implies that diagonal elements are not considered as neighbors (this
+# is the value used in the original dejavu code).
+# And 2 sets a square mask, i.e. all elements are considered neighbors.
+CONNECTIVITY_MASK = 1
+
+######################################################################
 # Sampling rate, related to the Nyquist conditions, which affects
 # the range frequencies we can detect.
 DEFAULT_FS = 44100
@@ -101,7 +110,7 @@ def fingerprint(channel_samples, Fs=DEFAULT_FS,
 
 def get_2D_peaks(arr2D, amp_min=DEFAULT_AMP_MIN):
     # http://docs.scipy.org/doc/scipy/reference/generated/scipy.ndimage.morphology.iterate_structure.html#scipy.ndimage.morphology.iterate_structure
-    struct = generate_binary_structure(2, 1)
+    struct = generate_binary_structure(2, CONNECTIVITY_MASK)
     neighborhood = iterate_structure(struct, PEAK_NEIGHBORHOOD_SIZE)
 
     # find local maxima using our fliter shape
