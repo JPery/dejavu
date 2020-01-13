@@ -317,7 +317,7 @@ class SQLDatabase(Database):
 
         que = queue.Queue()
         threads = []
-        for split_values in grouper(values, 1000):
+        for split_values in grouper(values, 10000):
             t = Thread(target=lambda q, arg1: q.put(execute_select_query(arg1)), args=(que, split_values))
             t.start()
             threads.append(t)
