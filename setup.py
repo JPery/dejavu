@@ -11,7 +11,7 @@ def parse_requirements(requirements):
         # remove comments
         nocomments = filter((lambda x: not x.startswith('#')), stripped)
         # remove empty lines
-        reqs = filter((lambda x: x), nocomments)
+        reqs = list(filter((lambda x: x), nocomments))
         return reqs
 
 PACKAGE_NAME = "PyDejavu"
