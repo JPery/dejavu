@@ -18,7 +18,8 @@ class BaseRecognizer(object):
             extracted_matches = self.dejavu.find_matches(d, Fs=self.Fs)
             total_hashes += extracted_matches[1]
             matches.extend(extracted_matches[0])
-        return self.dejavu.align_matches(matches, total_hashes)
+            audio_len = len(d)/self.Fs
+        return self.dejavu.align_matches(matches, total_hashes, audio_len)
 
     def recognize(self):
         pass  # base class does nothing
@@ -117,6 +118,11 @@ class NumpyArrayRecognizer(BaseRecognizer):
 
     def recognize_array(self, frames):
         t = time.time()
+        if decoder.CONVERT_TO_MONO:
+            frames = np.array([np.mean(frames, axis=0)], dtype=frames.dtype)
+        if fingerprint.NORM and len(frames) > 0:
+            gain = (-np.iinfo(frames.dtype).min) / np.max(np.abs(frames))
+            frames = np.array(frames * gain, dtype=frames.dtype)
         match = self._recognize(*frames)
         t = time.time() - t
         if match:

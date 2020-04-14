@@ -126,7 +126,7 @@ class Dejavu(object):
             total_hashes += 1
         return (self.db.return_matches(mapper), total_hashes)
 
-    def align_matches(self, matches, total_hashes):
+    def align_matches(self, matches, total_hashes, audio_len=-1):
         """
             Finds hash matches that align in time with other matches and finds
             consensus about which hashes are "true" signal from the audio.
@@ -163,15 +163,17 @@ class Dejavu(object):
         nseconds = round(float(largest) / fingerprint.DEFAULT_FS *
                          fingerprint.DEFAULT_WINDOW_SIZE *
                          fingerprint.DEFAULT_OVERLAP_RATIO, 5)
-
+        database_audio_len = song.get(Database.AUDIO_LENGTH, None)
+        len_ratio = database_audio_len / audio_len if database_audio_len > audio_len else 1
         song = {
             Dejavu.SONG_ID : song_id,
             Dejavu.SONG_NAME : songname,
             Dejavu.CONFIDENCE : largest_count,
-            Dejavu.AUDIO_LENGTH : song.get(Database.AUDIO_LENGTH, None),
-            Dejavu.RELATIVE_CONFIDENCE: (largest_count * 100) / song['num_fingerprints'],
+            Dejavu.AUDIO_LENGTH : database_audio_len,
+            Dejavu.RELATIVE_CONFIDENCE: (largest_count * len_ratio * 100) / song['num_fingerprints'],
             Dejavu.RELATIVE_CONFIDENCE2: (largest_count * 100) / float(total_hashes),
-            Dejavu.RELATIVE_CONFIDENCE3: (((largest_count*100)/song['num_fingerprints']) + ((largest_count*100)/float(total_hashes)))/2,
+            Dejavu.RELATIVE_CONFIDENCE3: (largest_count * 100) / song['num_fingerprints'],
+            #Dejavu.RELATIVE_CONFIDENCE3: (((largest_count*100)/song['num_fingerprints']) + ((largest_count*100)/float(total_hashes)))/2,
             Dejavu.RELATIVE_CONFIDENCE4: (largest_count * 100) / ((float(total_hashes)+song['num_fingerprints'])/2),
             Dejavu.OFFSET : int(largest),
             Dejavu.OFFSET_SECS : nseconds,
