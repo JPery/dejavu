@@ -34,18 +34,18 @@ DEFAULT_WINDOW_SIZE = 4096
 # Ratio by which each sequential window overlaps the last and the
 # next window. Higher overlap will allow a higher granularity of offset
 # matching, but potentially more fingerprints.
-DEFAULT_OVERLAP_RATIO = 0.333333
+DEFAULT_OVERLAP_RATIO = 0.5
 
 ######################################################################
 # Degree to which a fingerprint can be paired with its neighbors --
 # higher will cause more fingerprints, but potentially better accuracy.
-DEFAULT_FAN_VALUE = 30
+DEFAULT_FAN_VALUE = 50
 
 ######################################################################
 # Minimum amplitude in spectrogram in order to be considered a peak.
 # This can be raised to reduce number of fingerprints, but can negatively
 # affect accuracy.
-DEFAULT_AMP_MIN = 20
+DEFAULT_AMP_MIN = 18.5
 
 ######################################################################
 # Number of cells around an amplitude peak in the spectrogram in order
@@ -74,13 +74,13 @@ FINGERPRINT_REDUCTION = 40
 
 ######################################################################
 # Min and max frequency to compute melspectrogram
-MIN_FREQ = 400
+MIN_FREQ = 320
 
 ######################################################################
 # Number of Mel bands to generate
-N_MELS = 128
+N_MELS = 160
 
-NORM = True
+AREA_NORMALIZATION = True
 HTK = False
 
 # SHA1 has 40 hexadecimal chars to encode
@@ -109,7 +109,7 @@ def fingerprint(channel_samples, Fs=DEFAULT_FS,
             fmin=MIN_FREQ,
             n_mels=N_MELS,
             htk=HTK,
-            norm=1 if NORM else None
+            norm=1 if AREA_NORMALIZATION else None
         )
     except MemoryError:
         logging.getLogger('dejavu').exception("Memory Error processing %s seconds audio" % (round(len(channel_samples) /

@@ -3,6 +3,7 @@ import ads_dejavu.decoder as decoder
 import numpy as np
 import pyaudio
 import time
+from resampy import resample
 
 
 class BaseRecognizer(object):
@@ -14,14 +15,14 @@ class BaseRecognizer(object):
     def _recognize(self, *data):
         matches = []
         total_hashes = 0
+        audio_len = len(data[-1]) / self.Fs
         for d in data:
             extracted_matches = self.dejavu.find_matches(d, Fs=self.Fs)
             total_hashes += extracted_matches[1]
             matches.extend(extracted_matches[0])
-            audio_len = len(d)/self.Fs
         return self.dejavu.align_matches(matches, total_hashes, audio_len)
 
-    def recognize(self):
+    def recognize(self, *args, **kwargs):
         pass  # base class does nothing
 
 
@@ -116,11 +117,13 @@ class NumpyArrayRecognizer(BaseRecognizer):
     def __init__(self, dejavu):
         super(NumpyArrayRecognizer, self).__init__(dejavu)
 
-    def recognize_array(self, frames):
+    def recognize_array(self, frames, sr):
         t = time.time()
         if decoder.CONVERT_TO_MONO:
             frames = np.array([np.mean(frames, axis=0)], dtype=frames.dtype)
-        if fingerprint.NORM and len(frames) > 0:
+        if decoder.RESAMPLE and sr != fingerprint.DEFAULT_FS and len(frames[-1]) > 0:
+            frames = resample(frames, sr, fingerprint.DEFAULT_FS, axis=-1)
+        if decoder.NORMALIZE and len(frames[-1]) > 0:
             gain = (-np.iinfo(frames.dtype).min) / np.max(np.abs(frames))
             frames = np.array(frames * gain, dtype=frames.dtype)
         match = self._recognize(*frames)
@@ -129,8 +132,8 @@ class NumpyArrayRecognizer(BaseRecognizer):
             match['match_time'] = t
         return match
 
-    def recognize(self, data):
-        return self.recognize_array(data)
+    def recognize(self, data, sr=44100):
+        return self.recognize_array(data, sr)
 
 
 class NoRecordingError(Exception):
