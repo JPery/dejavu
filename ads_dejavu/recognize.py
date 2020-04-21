@@ -34,6 +34,7 @@ class FileRecognizer(BaseRecognizer):
         frames, self.Fs, file_hash, audio_length = decoder.read(filename, self.dejavu.limit)
         if decoder.RESAMPLE:
             frames = resample(np.array(frames, dtype=np.int16), self.Fs, fingerprint.DEFAULT_FS, axis=-1)
+            self.Fs = fingerprint.DEFAULT_FS
         t = time.time()
         match = self._recognize(*frames)
         t = time.time() - t
@@ -122,8 +123,9 @@ class NumpyArrayRecognizer(BaseRecognizer):
         t = time.time()
         if decoder.CONVERT_TO_MONO:
             frames = np.array([np.mean(frames, axis=0)], dtype=frames.dtype)
-        if decoder.RESAMPLE and sr != fingerprint.DEFAULT_FS and len(frames[-1]) > 0:
+        if decoder.RESAMPLE and sr != self.Fs and len(frames[-1]) > 0:
             frames = resample(frames, sr, fingerprint.DEFAULT_FS, axis=-1)
+            self.Fs = fingerprint.DEFAULT_FS
         if decoder.NORMALIZE and len(frames[-1]) > 0:
             gain = (-np.iinfo(frames.dtype).min) / np.max(np.abs(frames))
             frames = np.array(frames * gain, dtype=frames.dtype)
