@@ -60,7 +60,6 @@ def read(filename, limit=None):
     try:
         audiofile = normalize(AudioSegment.from_file(filename)) if NORMALIZE else AudioSegment.from_file(filename)
         audiofile = audiofile.set_channels(1) if CONVERT_TO_MONO else audiofile
-        audiofile = audiofile.set_frame_rate(DEFAULT_FS) if RESAMPLE else audiofile
 
         if limit:
             audiofile = audiofile[:limit * 1000]
@@ -84,7 +83,7 @@ def read(filename, limit=None):
         channels = []
         for chn in audiofile:
             channels.append(chn)
-    return channels, audiofile.frame_rate, unique_hash(filename), float(len(audiofile))/1000.0
+    return channels, fs, unique_hash(filename), float(len(audiofile))/1000.0
 
 
 def path_to_songname(path):

@@ -32,7 +32,8 @@ class FileRecognizer(BaseRecognizer):
 
     def recognize_file(self, filename):
         frames, self.Fs, file_hash, audio_length = decoder.read(filename, self.dejavu.limit)
-
+        if decoder.RESAMPLE:
+            frames = resample(np.array(frames, dtype=np.int16), self.Fs, fingerprint.DEFAULT_FS, axis=-1)
         t = time.time()
         match = self._recognize(*frames)
         t = time.time() - t
