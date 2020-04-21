@@ -123,7 +123,7 @@ class NumpyArrayRecognizer(BaseRecognizer):
         t = time.time()
         if decoder.CONVERT_TO_MONO:
             frames = np.array([np.mean(frames, axis=0)], dtype=frames.dtype)
-        if decoder.RESAMPLE and sr != self.Fs and len(frames[-1]) > 0:
+        if decoder.RESAMPLE and sr != fingerprint.DEFAULT_FS and len(frames[-1]) > 0:
             frames = resample(frames, sr, fingerprint.DEFAULT_FS, axis=-1)
             self.Fs = fingerprint.DEFAULT_FS
         if decoder.NORMALIZE and len(frames[-1]) > 0:
@@ -136,6 +136,7 @@ class NumpyArrayRecognizer(BaseRecognizer):
         return match
 
     def recognize(self, data, sr=44100):
+        self.Fs = sr
         return self.recognize_array(data, sr)
 
 
