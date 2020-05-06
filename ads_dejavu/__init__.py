@@ -4,6 +4,8 @@ import ads_dejavu.fingerprint as fingerprint
 import multiprocessing
 import os
 import logging
+from resampy import resample
+import numpy as np
 
 
 class Dejavu(object):
@@ -16,9 +18,6 @@ class Dejavu(object):
     OFFSET_SECS = 'offset_seconds'
     AUDIO_LENGTH = 'audio_length'
     RELATIVE_CONFIDENCE = 'relative_confidence'
-    RELATIVE_CONFIDENCE2 = 'relative_confidence2'
-    RELATIVE_CONFIDENCE3 = 'relative_confidence3'
-    RELATIVE_CONFIDENCE4 = 'relative_confidence4'
 
     def __init__(self, config):
         super(Dejavu, self).__init__()
@@ -170,11 +169,7 @@ class Dejavu(object):
             Dejavu.SONG_NAME : songname,
             Dejavu.CONFIDENCE : largest_count,
             Dejavu.AUDIO_LENGTH : database_audio_len,
-            Dejavu.RELATIVE_CONFIDENCE: (largest_count * len_ratio * 100) / song['num_fingerprints'],
-            Dejavu.RELATIVE_CONFIDENCE2: (largest_count * 100) / float(total_hashes),
-            Dejavu.RELATIVE_CONFIDENCE3: (largest_count * 100) / song['num_fingerprints'],
-            #Dejavu.RELATIVE_CONFIDENCE3: (((largest_count*100)/song['num_fingerprints']) + ((largest_count*100)/float(total_hashes)))/2,
-            Dejavu.RELATIVE_CONFIDENCE4: (largest_count * 100) / ((float(total_hashes)+song['num_fingerprints'])/2),
+            Dejavu.RELATIVE_CONFIDENCE : (largest_count * len_ratio * 100) / song['num_fingerprints'],
             Dejavu.OFFSET : int(largest),
             Dejavu.OFFSET_SECS : nseconds,
             Database.FIELD_FILE_SHA1 : song.get(Database.FIELD_FILE_SHA1, None),
@@ -197,6 +192,15 @@ def _fingerprint_worker(filename, limit=None, song_name=None):
     songname, extension = os.path.splitext(os.path.basename(filename))
     song_name = song_name or songname
     channels, Fs, file_hash, audio_length = decoder.read(filename, limit)
+    channels = np.array(channels, dtype=np.int16)
+    if decoder.CONVERT_TO_MONO:
+        channels = np.array([np.mean(channels, axis=0)], dtype=channels.dtype)
+    if decoder.RESAMPLE and Fs != fingerprint.DEFAULT_FS and len(channels[-1]) > 0:
+        channels = resample(channels, Fs, fingerprint.DEFAULT_FS, axis=-1)
+        Fs = fingerprint.DEFAULT_FS
+    if decoder.NORMALIZE and len(channels[-1]) > 0:
+        gain = (-np.iinfo(channels.dtype).min) / np.max(np.abs(channels))
+        channels = np.array(channels * gain, dtype=channels.dtype)
     result = set()
     channel_amount = len(channels)
 

@@ -58,8 +58,7 @@ def read(filename, limit=None):
     """
     # pydub does not support 24-bit wav files, use wavio when this occurs
     try:
-        audiofile = normalize(AudioSegment.from_file(filename)) if NORMALIZE else AudioSegment.from_file(filename)
-        audiofile = audiofile.set_channels(1) if CONVERT_TO_MONO else audiofile
+        audiofile = AudioSegment.from_file(filename)
 
         if limit:
             audiofile = audiofile[:limit * 1000]
