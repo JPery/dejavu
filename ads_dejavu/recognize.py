@@ -169,12 +169,11 @@ class AudioSegmentRecognizer(BaseRecognizer):
         if decoder.NORMALIZE:
             audio_segment = normalize(audio_segment)
         frames = AudioSegmentRecognizer.audio_segment_to_array(audio_segment)
-        matches = self._recognize(*frames)
+        match = self._recognize(*frames)
         t = time.time() - t
-        if matches:
-            for i in range(len(matches)):
-                matches[i]['match_time'] = t
-        return matches
+        if match:
+            match['match_time'] = t
+        return match
 
     def recognize(self, audio_segment: AudioSegment):
         self.Fs = audio_segment.frame_rate
