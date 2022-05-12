@@ -147,11 +147,11 @@ class AudioSegmentRecognizer(BaseRecognizer):
         super(AudioSegmentRecognizer, self).__init__(dejavu)
 
     @staticmethod
-    def nparray_from_audio_segment(audio_segment: AudioSegment) -> np.array:
+    def audio_segment_to_array(audio_segment: AudioSegment) -> np.array:
         """
-        Convierte un AudioSegment a Numpy Array
+        Converts an AudioSegment into a Numpy Array in dejavu's desired format
         :param audio_segment: pydub.AudioSegment
-        :return: Array Numpy
+        :return: Array Numpy in dejavu's desired format
         """
         data = np.fromstring(audio_segment._data, np.int16)
         channels = []
@@ -168,7 +168,7 @@ class AudioSegmentRecognizer(BaseRecognizer):
             self.Fs = fingerprint.DEFAULT_FS
         if decoder.NORMALIZE:
             audio_segment = normalize(audio_segment)
-        frames = AudioSegmentRecognizer.nparray_from_audio_segment(audio_segment)
+        frames = AudioSegmentRecognizer.audio_segment_to_array(audio_segment)
         matches = self._recognize(*frames)
         t = time.time() - t
         if matches:
