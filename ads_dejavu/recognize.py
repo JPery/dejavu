@@ -4,6 +4,8 @@ import numpy as np
 import pyaudio
 import time
 from resampy import resample
+from pydub import AudioSegment
+from pydub.effects import normalize
 
 
 class BaseRecognizer(object):
@@ -139,6 +141,44 @@ class NumpyArrayRecognizer(BaseRecognizer):
         self.Fs = sr
         return self.recognize_array(data, sr)
 
+
+class AudioSegmentRecognizer(BaseRecognizer):
+    def __init__(self, dejavu):
+        super(AudioSegmentRecognizer, self).__init__(dejavu)
+
+    @staticmethod
+    def nparray_from_audio_segment(audio_segment: AudioSegment) -> np.array:
+        """
+        Convierte un AudioSegment a Numpy Array
+        :param audio_segment: pydub.AudioSegment
+        :return: Array Numpy
+        """
+        data = np.fromstring(audio_segment._data, np.int16)
+        channels = []
+        for chn in range(audio_segment.channels):
+            channels.append(data[chn::audio_segment.channels])
+        return np.array(channels, dtype=np.int16)
+
+    def recognize_audio_segment(self, audio_segment: AudioSegment):
+        t = time.time()
+        if decoder.CONVERT_TO_MONO:
+            audio_segment = audio_segment.set_channels(1)
+        if decoder.RESAMPLE:
+            audio_segment = audio_segment.set_frame_rate(fingerprint.DEFAULT_FS)
+            self.Fs = fingerprint.DEFAULT_FS
+        if decoder.NORMALIZE:
+            audio_segment = normalize(audio_segment)
+        frames = AudioSegmentRecognizer.nparray_from_audio_segment(audio_segment)
+        matches = self._recognize(*frames)
+        t = time.time() - t
+        if matches:
+            for i in range(len(matches)):
+                matches[i]['match_time'] = t
+        return matches
+
+    def recognize(self, audio_segment: AudioSegment):
+        self.Fs = audio_segment.frame_rate
+        return self.recognize_audio_segment(audio_segment)
 
 class NoRecordingError(Exception):
     pass
