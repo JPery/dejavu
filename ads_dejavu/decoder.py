@@ -3,11 +3,9 @@ import fnmatch
 import numpy as np
 from pydub import AudioSegment
 from pydub.utils import audioop
-from pydub.effects import normalize
 import dejavu.wavio as wavio
 from hashlib import sha1
 from sys import version
-from ads_dejavu.fingerprint import DEFAULT_FS
 
 NORMALIZE = True
 CONVERT_TO_MONO = True

@@ -3,7 +3,7 @@ import ads_dejavu.decoder as decoder
 import numpy as np
 import pyaudio
 import time
-from resampy import resample
+from soxr import resample
 from pydub import AudioSegment
 from pydub.effects import normalize
 
@@ -35,7 +35,7 @@ class FileRecognizer(BaseRecognizer):
     def recognize_file(self, filename):
         frames, self.Fs, file_hash, audio_length = decoder.read(filename, self.dejavu.limit)
         if decoder.RESAMPLE:
-            frames = resample(np.array(frames, dtype=np.int16), self.Fs, fingerprint.DEFAULT_FS, axis=-1)
+            frames = resample(np.array(frames, dtype=np.int16).T, self.Fs, fingerprint.DEFAULT_FS).T
             self.Fs = fingerprint.DEFAULT_FS
         t = time.time()
         match = self._recognize(*frames)
@@ -126,7 +126,7 @@ class NumpyArrayRecognizer(BaseRecognizer):
         if decoder.CONVERT_TO_MONO:
             frames = np.array([np.mean(frames, axis=0)], dtype=frames.dtype)
         if decoder.RESAMPLE and sr != fingerprint.DEFAULT_FS and len(frames[-1]) > 0:
-            frames = resample(frames, sr, fingerprint.DEFAULT_FS, axis=-1)
+            frames = resample(frames.T, sr, fingerprint.DEFAULT_FS).T
             self.Fs = fingerprint.DEFAULT_FS
         if decoder.NORMALIZE and len(frames[-1]) > 0:
             gain = (-np.iinfo(frames.dtype).min) / np.max(np.abs(frames))
