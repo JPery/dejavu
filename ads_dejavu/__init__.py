@@ -4,7 +4,7 @@ import ads_dejavu.fingerprint as fingerprint
 import multiprocessing
 import os
 import logging
-from resampy import resample
+from soxr import resample
 import numpy as np
 
 
@@ -196,7 +196,7 @@ def _fingerprint_worker(filename, limit=None, song_name=None):
     if decoder.CONVERT_TO_MONO:
         channels = np.array([np.mean(channels, axis=0)], dtype=channels.dtype)
     if decoder.RESAMPLE and Fs != fingerprint.DEFAULT_FS and len(channels[-1]) > 0:
-        channels = resample(channels, Fs, fingerprint.DEFAULT_FS, axis=-1)
+        channels = resample(channels.T, Fs, fingerprint.DEFAULT_FS).T
         Fs = fingerprint.DEFAULT_FS
     if decoder.NORMALIZE and len(channels[-1]) > 0:
         gain = (-np.iinfo(channels.dtype).min) / np.max(np.abs(channels))
