@@ -8,6 +8,6 @@ scipy>=1.0.0
 matplotlib>=2.1.2
 pymysql==0.9.3
 resampy==0.2.2
-librosa==0.7.2
+librosa==0.10.2.post1
 ### END ###
 
