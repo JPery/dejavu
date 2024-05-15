@@ -102,7 +102,7 @@ def fingerprint(channel_samples, Fs=DEFAULT_FS,
         return []
     try:
         arr2D = melspectrogram(
-            buf_to_float(np.ascontiguousarray(channel_samples)),
+            y=buf_to_float(np.ascontiguousarray(channel_samples)),
             sr=Fs,
             n_fft=wsize, 
             hop_length=int(wsize * wratio),
