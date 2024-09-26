@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import logging
-
+import warnings
 try:
     import queue
     from itertools import zip_longest
@@ -176,12 +176,16 @@ class SQLDatabase(Database):
         fingerprints associated with them.
         """
         with self.cursor() as cur:
+            # Suppress warnings only for pymysql, all other modules can send warnings
+            warnings.filterwarnings('ignore', module=r"pymysql")
             try:
                 cur.execute(self.CREATE_SONGS_TABLE)
                 cur.execute(self.CREATE_FINGERPRINTS_TABLE)
                 cur.execute(self.DELETE_UNFINGERPRINTED)
             except mysql.MySQLError as e:
                 logging.exception(e)
+            # Enable warnings again
+            warnings.filterwarnings('default', module=r"pymysql")
 
     def empty(self):
         """
