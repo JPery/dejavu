@@ -177,7 +177,7 @@ class SQLDatabase(Database):
             except mysql.MySQLError as e:
                 logging.exception(e)
             # Enable warnings again
-           warnings.filterwarnings('default', module=r"pymysql")
+            warnings.filterwarnings('default', module=r"pymysql")
 
     def empty(self):
         """
